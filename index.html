@@ -76,4 +76,47 @@
 
         .score-card {
             margin-top: 20px;
-            background: #0f172
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 20px;
+        }
+
+        #score-display {
+            font-size: 4rem;
+            margin: 0;
+            color: #4ade80; /* 螢光綠 */
+            font-weight: 800;
+        }
+
+        .label {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        #label-container {
+            margin-top: 5px;
+            color: #22d3ee;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>AI Trainer</h1>
+        <button type="button" onclick="init()">START WORKOUT</button>
+        <div id="status">Ready to Scan</div>
+        
+        <div class="canvas-container">
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div class="score-card">
+            <div class="label">TOTAL REPS</div>
+            <h2 id="score-display">0</h2>
+            <div id="label-container">Position Checking...</div>
+        </div>
+    </main>
+
+    <script src="./script.js"></script>
+</body>
+</html>
