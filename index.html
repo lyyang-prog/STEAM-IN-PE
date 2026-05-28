@@ -1,26 +1,27 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-  <head>
+<head>
     <meta charset="UTF-8" />
-    <title>AI 動作感應遊戲</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@latest/dist/teachablemachine-pose.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 健身教練 - iPad 測試版</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
     <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
+</head>
+<body>
     <main>
-      <h1>AI 動作感應遊戲</h1>
-      <button type="button" onclick="init()">開始連線攝像頭</button>
-      <div id="status">準備就緒，請點擊按鈕</div>
+        <h1>AI 動作感應遊戲</h1>
+        <button type="button" onclick="init()">開始連線攝像頭</button>
+        <div id="status">準備就緒，請點擊按鈕</div>
+        
+        <div class="canvas-container">
+            <canvas id="canvas"></canvas>
+        </div>
 
-      <div style="position: relative; margin: 20px 0">
-        <canvas id="canvas"></canvas>
-      </div>
-
-      <div id="label-container" style="font-size: 20px; color: #555"></div>
-      <h2 id="score-display" style="font-size: 40px; color: red">分數：0</h2>
+        <div id="label-container"></div>
+        <h2 id="score-display">分數：0</h2>
     </main>
 
-    <script src="script.js"></script>
-  </body>
+    <script src="./script.js"></script>
+</body>
 </html>
