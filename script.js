@@ -1,7 +1,3 @@
-// 替換成你在 Teachable Machine 導出的模型連結 (記得最後要加斜槓 /)
-const URL = "https://teachablemachine.withgoogle.com/models/bIbkK6h2o/"; 
-
-// 1. 替換成你的 Teachable Machine 模型連結 (確保結尾有斜槓 /)
 const URL = "https://teachablemachine.withgoogle.com/models/bIbkK6h2o/";
 
 let model, webcam, ctx, labelContainer, maxPredictions;
