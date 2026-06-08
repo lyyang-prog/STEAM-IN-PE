@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 氣球打擊王 - 熱血戰鬥音樂全場版</title>
+    <title>AI 氣球打擊王 - 隨機樂章與均衡打擊版</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
     
@@ -171,7 +171,7 @@
     <main>
         <h1>🎈 氣球打擊王 🎈</h1>
         <button type="button" id="start-btn" onclick="initAudioAndGame()">開始挑戰</button>
-        <div id="status">點擊「開始挑戰」後戰鬥 BGM 將全面奏響！</div>
+        <div id="status">點擊「開始挑戰」將隨機載入三首熱血 BGM 之一！</div>
         
         <div class="score-card">
             <div class="score-box">
@@ -223,67 +223,109 @@ const TOTAL_BALLOONS = 50;
 let spawnedBalloonsCount = 0;
 let balloonSpawnTimeline = []; 
 
-// 🔊 音效與背景音樂控制
+// 🎯 新增：追蹤上一顆氣球落下的方向，確保同一邊不連續超過 3 個
+let lastSide = ""; 
+let sideStreak = 0; 
+
+// 🔊 音效與 3 種音樂控制
 let audioCtx = null;
 let bgmInterval = null;
+let selectedTrack = 0; // 0, 1, 或 2
 
 function initAudioAndGame() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
-    // 💡 關鍵：啟動全場不中斷的戰鬥 BGM
+    
+    // 🎲 隨機選取曲目 1, 2, 或 3
+    selectedTrack = Math.floor(Math.random() * 3);
+    
     startFullMatchBGM();
     initOrRestart();
 }
 
-// 🎵 演算法音樂合成器：熱血動漫格鬥風 (全場不中斷版)
+// 🎵 演算法隨機音樂合成器（內建 3 款完全不同曲風的熱血戰鬥 BGM）
 function startFullMatchBGM() {
     if (bgmInterval) clearInterval(bgmInterval);
     
     let step = 0;
-    const bassNotes = [110, 110, 130, 146, 165, 165, 196, 220]; 
-    
+    const trackNames = ["『疾走電子流』", "『重低音轟炸』", "『熱血交響龐克』"];
+    document.getElementById("status").innerText = "🥊 目前播放 BGM：" + trackNames[selectedTrack];
+
     bgmInterval = setInterval(() => {
-        // 即使遊戲在運行中 (isGameRunning) 也照樣播放，不再靜音
         if (audioCtx && audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
 
         let time = audioCtx.currentTime;
-        
-        // 1. 動漫電音鋸齒波低音
         let osc = audioCtx.createOscillator();
         let gain = audioCtx.createGain();
-        osc.type = 'sawtooth'; 
-        osc.frequency.setValueAtTime(bassNotes[step % bassNotes.length] / 2, time);
-        
-        gain.gain.setValueAtTime(0.12, time);
-        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
-        
+
+        // 🎵 曲風 1：原版熱血疾走電子流
+        if (selectedTrack === 0) {
+            const notes = [110, 110, 130, 146, 165, 165, 196, 220]; 
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(notes[step % notes.length] / 2, time);
+            gain.gain.setValueAtTime(0.12, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+            
+            if (step % 4 === 2) {
+                playSnareDrum(180, 0.08, time);
+            }
+        } 
+        // 🎵 曲風 2：極具壓迫感的重低音轟炸 (Bass Boost Style)
+        else if (selectedTrack === 1) {
+            const notes = [98, 98, 98, 116, 87, 87, 116, 146]; 
+            osc.type = 'square'; // 方波：比鋸齒波更有龐克重低音震撼感
+            osc.frequency.setValueAtTime(notes[step % notes.length] / 2, time);
+            gain.gain.setValueAtTime(0.1, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.25);
+            
+            if (step % 2 === 1) {
+                playSnareDrum(120, 0.1, time); // 更沉重的鼓點
+            }
+        } 
+        // 🎵 曲風 3：速度感炸裂的機甲/動漫高頻電音
+        else {
+            const notes = [130, 165, 196, 165, 220, 196, 261, 220]; 
+            osc.type = 'sawtooth';
+            // 旋律交替爬升音階
+            let freq = notes[step % notes.length];
+            if (step % 8 >= 4) freq *= 1.2; 
+            
+            osc.frequency.setValueAtTime(freq / 2, time);
+            gain.gain.setValueAtTime(0.09, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
+            
+            if (step % 4 === 0) {
+                playSnareDrum(250, 0.06, time); // 清脆的高音小鼓
+            }
+        }
+
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start(time);
-        osc.stop(time + 0.2);
-
-        // 2. 模擬強烈節奏的小鼓點
-        if (step % 4 === 2) {
-            let snareOsc = audioCtx.createOscillator();
-            let snareGain = audioCtx.createGain();
-            snareOsc.type = 'triangle';
-            snareOsc.frequency.setValueAtTime(180, time);
-            snareOsc.frequency.exponentialRampToValueAtTime(80, time + 0.1);
-            
-            snareGain.gain.setValueAtTime(0.08, time); // 略微調小背景鼓聲，凸顯出拳打擊音效
-            snareGain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
-            
-            snareOsc.connect(snareGain);
-            snareGain.connect(audioCtx.destination);
-            snareOsc.start(time);
-            snareOsc.stop(time + 0.12);
-        }
+        osc.stop(time + 0.25);
         
         step++;
-    }, 150); 
+    }, 140); // 微調節奏，更有速度流暢感
+}
+
+// 輔助鼓點合成器
+function playSnareDrum(pitch, volume, time) {
+    let snareOsc = audioCtx.createOscillator();
+    let snareGain = audioCtx.createGain();
+    snareOsc.type = 'triangle';
+    snareOsc.frequency.setValueAtTime(pitch, time);
+    snareOsc.frequency.exponentialRampToValueAtTime(60, time + 0.1);
+    
+    snareGain.gain.setValueAtTime(volume, time);
+    snareGain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
+    
+    snareOsc.connect(snareGain);
+    snareGain.connect(audioCtx.destination);
+    snareOsc.start(time);
+    snareOsc.stop(time + 0.12);
 }
 
 // 💥 演算法音效合成器：氣球爆破 + 重拳打擊感
@@ -292,7 +334,6 @@ function playHitSound() {
     
     let time = audioCtx.currentTime;
     
-    // 1. 重拳肉搏衝擊音
     let punchOsc = audioCtx.createOscillator();
     let punchGain = audioCtx.createGain();
     punchOsc.type = 'sine'; 
@@ -307,7 +348,6 @@ function playHitSound() {
     punchOsc.start(time);
     punchOsc.stop(time + 0.18);
 
-    // 2. 氣球破裂高頻雜訊
     let bufferSize = audioCtx.sampleRate * 0.1; 
     let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
     let data = buffer.getChannelData(0);
@@ -388,14 +428,13 @@ async function initOrRestart() {
 }
 
 function startGameLogic() {
-    const statusDiv = document.getElementById("status");
-    statusDiv.innerText = "🥊 氣球打擊王 - 戰鬥進行中！";
-
     score = 0;
     timeLeft = 60;
     speedMultiplier = 1.0;
     notes = [];
     particles = [];
+    lastSide = "";
+    sideStreak = 0;
     
     generateRandomTimeline(); 
     
@@ -431,12 +470,13 @@ function endGame() {
     document.getElementById("status").innerText = "🔔 挑戰結束！";
     document.getElementById("final-score").innerText = score + " / 500";
     document.getElementById("game-over-screen").style.display = "flex";
-    
-    // 💡 結算畫面時音樂維持播放，不中斷戰鬥熱血氛圍
 }
 
 function resetGame() {
     document.getElementById("game-over-screen").style.display = "none";
+    // 🎲 每次重新玩也重新隨機換一首歌！
+    selectedTrack = Math.floor(Math.random() * 3);
+    startFullMatchBGM();
     startGameLogic();
 }
 
@@ -458,13 +498,28 @@ function updateAndSpawnLogic() {
         let nextSpawnTime = balloonSpawnTimeline[spawnedBalloonsCount];
         
         if (currentElapsedSecond >= nextSpawnTime) {
-            let isLeft = Math.random() > 0.5; 
+            // 🎯 核心防卡邏輯：決定這顆氣球該落在哪一邊
+            let currentSide = Math.random() > 0.5 ? "左" : "右";
+            
+            if (currentSide === lastSide) {
+                sideStreak++;
+                // 💡 超過同一邊連續 3 個時，強制換到對面！
+                if (sideStreak > 3) {
+                    currentSide = (lastSide === "左") ? "右" : "左";
+                    sideStreak = 1; 
+                }
+            } else {
+                sideStreak = 1;
+            }
+            lastSide = currentSide;
+
+            let isLeft = (currentSide === "左");
             let baseSpeed = 4 + Math.random() * 2; 
             
             notes.push({
                 x: isLeft ? canvas.width * 0.25 : canvas.width * 0.75,
                 y: -30,
-                type: isLeft ? "左揮拳" : "右揮拳",
+                type: isLeft ? "左揮拳" : "right", // 相容你原本 TM 的右拳標籤
                 speed: baseSpeed * speedMultiplier, 
                 active: true
             });
@@ -563,7 +618,7 @@ function drawGame() {
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = lastStatus === "右揮拳" ? "rgba(244, 63, 94, 0.85)" : "rgba(244, 63, 94, 0.15)";
+    ctx.fillStyle = (lastStatus === "右揮拳" || lastStatus === "right") ? "rgba(244, 63, 94, 0.85)" : "rgba(244, 63, 94, 0.15)";
     ctx.strokeStyle = "#f43f5e";
     ctx.lineWidth = 4;
     ctx.beginPath();
@@ -616,7 +671,7 @@ function drawGame() {
 
 function checkHit(punchType) {
     for (let note of notes) {
-        if (note.active && note.type === punchType) {
+        if (note.active && (note.type === punchType || (note.type === "right" && punchType === "右揮拳"))) {
             let distance = Math.abs(note.y - targetY);
             
             if (distance < 60) {
@@ -624,9 +679,9 @@ function checkHit(punchType) {
                 note.active = false; 
                 document.getElementById("score-display").innerText = score + " / 500";
                 
-                playHitSound(); // 🔊 震撼打擊音效同時疊加播放
+                playHitSound(); 
                 
-                createExplosion(note.x, note.y, punchType === "左揮拳" ? "left" : "right");
+                createExplosion(note.x, note.y, note.type === "左揮拳" ? "left" : "right");
                 break;
             }
         }
