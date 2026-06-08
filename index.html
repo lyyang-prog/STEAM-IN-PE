@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 氣球打擊王 - 50% 黃金視野版</title>
-    <!-- 載入 Google 官方 TensorFlow & tmPose 套件 -->
+    <title>AI 氣球打擊王 - 60% 黃金視野版</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
     
     <style>
         body {
-            /* 全螢幕拳擊館奢華深色背景 */
             background: radial-gradient(circle at center, #1a102f 0%, #05070c 100%);
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -25,9 +23,8 @@
 
         main {
             width: 95%;
-            max-width: 800px;
+            max-width: 950px;
             text-align: center;
-            /* 輕量級高質感毛玻璃容器 */
             background: rgba(20, 26, 44, 0.7);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
@@ -42,7 +39,7 @@
 
         h1 {
             font-size: 1.6rem;
-            color: #ffde59; /* 耀眼冠軍金 */
+            color: #ffde59; 
             text-shadow: 0 0 12px rgba(255, 222, 89, 0.5);
             text-transform: uppercase;
             letter-spacing: 4px;
@@ -80,7 +77,6 @@
             letter-spacing: 1px;
         }
 
-        /* 頂部數據看板：現在放在畫布上方，更符合視覺動線 */
         .score-card {
             margin-bottom: 10px;
             background: rgba(9, 11, 20, 0.85);
@@ -90,7 +86,8 @@
             display: flex;
             justify-content: space-around;
             align-items: center;
-            width: 55vw; /* 配合 50% 視野做微調縮放 */
+            /* 🎯 數據看板寬度同步調配至 65vw 配合 60% 視野 */
+            width: 65vw; 
         }
 
         .score-box {
@@ -126,10 +123,10 @@
             font-weight: 800;
         }
 
-        /* 🎯 關鍵更新：完美 50% 比例容器，視野集中不失真 */
+        /* 🎯 關鍵更新：將寬高設定為完美的 60% 視野比例（65vw / 48vh） */
         .canvas-container {
-            width: 55vw;
-            height: 42vh;
+            width: 65vw;
+            height: 48vh;
             background: #020617;
             border-radius: 16px;
             overflow: hidden;
@@ -145,7 +142,6 @@
             object-fit: contain; 
         }
 
-        /* 挑戰完成黑屏覆蓋層 */
         #game-over-screen {
             display: none;
             position: absolute;
@@ -179,7 +175,6 @@
         <button type="button" id="start-btn" onclick="initOrRestart()">開始挑戰</button>
         <div id="status">Ready to Boxing</div>
         
-        <!-- 看板往上移，出拳時眼角餘光就能直接看到時間 -->
         <div class="score-card">
             <div class="score-box">
                 <div class="label">當前得分</div>
@@ -199,7 +194,6 @@
             <canvas id="canvas"></canvas>
         </div>
 
-        <!-- 結算畫面 -->
         <div id="game-over-screen">
             <h2>K.O. 挑戰結束</h2>
             <div class="label">最終格鬥總分</div>
@@ -227,7 +221,7 @@ let timeLeft = 60;
 let timerInterval = null;
 let speedMultiplier = 1.0; 
 
-// 依然保持你最愛的：一局固定 50 顆氣球，滿分 500 分公平競賽機制
+// 一局固定 50 顆氣球，滿分 500 分
 const TOTAL_BALLOONS = 50;
 let spawnedBalloonsCount = 0;
 let balloonSpawnTimeline = []; 
@@ -309,7 +303,6 @@ function startGameLogic() {
         timeLeft--;
         document.getElementById("time-display").innerText = timeLeft + "s";
         
-        // 速度加乘曲線：前慢後快
         speedMultiplier = 1.0 + (60 - timeLeft) * 0.035; 
         
         if (timeLeft <= 10) {
@@ -402,11 +395,9 @@ async function predict() {
 }
 
 function drawRingBackground() {
-    // 專業拳館高級深色調
     ctx.fillStyle = "#090c15";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 擂台立體拼木地板
     let floorGrad = ctx.createLinearGradient(0, canvas.height * 0.4, 0, canvas.height);
     floorGrad.addColorStop(0, "#0f1322"); 
     floorGrad.addColorStop(1, "#18143a"); 
@@ -420,7 +411,6 @@ function drawRingBackground() {
     ctx.closePath();
     ctx.fill();
 
-    // 擂台透視線
     ctx.strokeStyle = "rgba(255, 255, 255, 0.02)";
     ctx.lineWidth = 2;
     for(let i = 0; i <= 10; i++) {
@@ -430,13 +420,11 @@ function drawRingBackground() {
         ctx.stroke();
     }
 
-    // 左紅角落圍欄繩索
     ctx.strokeStyle = "rgba(239, 68, 68, 0.4)"; 
     ctx.lineWidth = 4;
     ctx.beginPath(); ctx.moveTo(0, canvas.height*0.35); ctx.lineTo(canvas.width*0.25, canvas.height*0.4); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0, canvas.height*0.55); ctx.lineTo(canvas.width*0.13, canvas.height*0.68); ctx.stroke();
 
-    // 右藍角落圍欄繩索
     ctx.strokeStyle = "rgba(14, 165, 233, 0.4)"; 
     ctx.beginPath(); ctx.moveTo(canvas.width, canvas.height*0.35); ctx.lineTo(canvas.width*0.75, canvas.height*0.4); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(canvas.width, canvas.height*0.55); ctx.lineTo(canvas.width*0.87, canvas.height*0.68); ctx.stroke();
@@ -450,7 +438,6 @@ function drawGame() {
     ctx.drawImage(webcam.canvas, 0, 0, canvas.width, canvas.height);
     ctx.restore();
 
-    // 金黃色格鬥打擊線
     ctx.strokeStyle = "rgba(250, 204, 21, 0.7)"; 
     ctx.lineWidth = 5;
     ctx.beginPath();
@@ -458,7 +445,6 @@ function drawGame() {
     ctx.lineTo(canvas.width, targetY);
     ctx.stroke();
 
-    // 左右打擊靶圈
     ctx.fillStyle = lastStatus === "左揮拳" ? "rgba(34, 211, 238, 0.85)" : "rgba(34, 211, 238, 0.15)";
     ctx.strokeStyle = "#22d3ee";
     ctx.lineWidth = 4;
@@ -475,7 +461,6 @@ function drawGame() {
     ctx.fill();
     ctx.stroke();
 
-    // 氣球渲染與發光
     for (let i = notes.length - 1; i >= 0; i--) {
         let note = notes[i];
         note.y += note.speed; 
@@ -503,7 +488,6 @@ function drawGame() {
         }
     }
 
-    // 擊破粒子
     for (let i = particles.length - 1; i >= 0; i--) {
         let p = particles[i];
         p.x += p.vx; p.y += p.vy; p.alpha -= 0.04; 
