@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 氣球打擊王 - 終極聽覺震撼版</title>
+    <title>AI 氣球打擊王 - 熱血戰鬥音樂全場版</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
     
@@ -171,7 +171,7 @@
     <main>
         <h1>🎈 氣球打擊王 🎈</h1>
         <button type="button" id="start-btn" onclick="initAudioAndGame()">開始挑戰</button>
-        <div id="status">點擊「開始挑戰」後將響起戰鬥 BGM！</div>
+        <div id="status">點擊「開始挑戰」後戰鬥 BGM 將全面奏響！</div>
         
         <div class="score-card">
             <div class="score-box">
@@ -223,41 +223,38 @@ const TOTAL_BALLOONS = 50;
 let spawnedBalloonsCount = 0;
 let balloonSpawnTimeline = []; 
 
-// 🔊 音效與音樂音訊上下文
+// 🔊 音效與背景音樂控制
 let audioCtx = null;
 let bgmInterval = null;
 
-// 初始化音訊：蘋果 iOS/iPadOS 必須由使用者點擊觸發音訊
 function initAudioAndGame() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
-    // 開始播放熱血備戰音樂，並同步初始化相機遊戲
-    startMenuBGM();
+    // 💡 關鍵：啟動全場不中斷的戰鬥 BGM
+    startFullMatchBGM();
     initOrRestart();
 }
 
-// 🎵 演算法音樂合成器：熱血動漫打鬥風備戰音樂 (免版權)
-function startMenuBGM() {
+// 🎵 演算法音樂合成器：熱血動漫格鬥風 (全場不中斷版)
+function startFullMatchBGM() {
     if (bgmInterval) clearInterval(bgmInterval);
     
     let step = 0;
-    // 動漫電子風格的疾走和弦音高 (Hz)
     const bassNotes = [110, 110, 130, 146, 165, 165, 196, 220]; 
     
     bgmInterval = setInterval(() => {
-        if (isGameRunning) return; // 遊戲開始後，自動靜音背景 BGM
-        
+        // 即使遊戲在運行中 (isGameRunning) 也照樣播放，不再靜音
         if (audioCtx && audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
 
         let time = audioCtx.currentTime;
         
-        // 1. 合成重低音（Bassline）
+        // 1. 動漫電音鋸齒波低音
         let osc = audioCtx.createOscillator();
         let gain = audioCtx.createGain();
-        osc.type = 'sawtooth'; // 鋸齒波，極具動漫電音侵略感
+        osc.type = 'sawtooth'; 
         osc.frequency.setValueAtTime(bassNotes[step % bassNotes.length] / 2, time);
         
         gain.gain.setValueAtTime(0.12, time);
@@ -268,7 +265,7 @@ function startMenuBGM() {
         osc.start(time);
         osc.stop(time + 0.2);
 
-        // 2. 每逢第 2、6 拍，加入模擬小鼓（Snare）的拍擊感
+        // 2. 模擬強烈節奏的小鼓點
         if (step % 4 === 2) {
             let snareOsc = audioCtx.createOscillator();
             let snareGain = audioCtx.createGain();
@@ -276,7 +273,7 @@ function startMenuBGM() {
             snareOsc.frequency.setValueAtTime(180, time);
             snareOsc.frequency.exponentialRampToValueAtTime(80, time + 0.1);
             
-            snareGain.gain.setValueAtTime(0.1, time);
+            snareGain.gain.setValueAtTime(0.08, time); // 略微調小背景鼓聲，凸顯出拳打擊音效
             snareGain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
             
             snareOsc.connect(snareGain);
@@ -286,14 +283,7 @@ function startMenuBGM() {
         }
         
         step++;
-    }, 150); // 疾走速度感
-}
-
-function stopMenuBGM() {
-    if (bgmInterval) {
-        clearInterval(bgmInterval);
-        bgmInterval = null;
-    }
+    }, 150); 
 }
 
 // 💥 演算法音效合成器：氣球爆破 + 重拳打擊感
@@ -302,12 +292,12 @@ function playHitSound() {
     
     let time = audioCtx.currentTime;
     
-    // 1. 產生重拳的肉搏低頻衝擊波
+    // 1. 重拳肉搏衝擊音
     let punchOsc = audioCtx.createOscillator();
     let punchGain = audioCtx.createGain();
-    punchOsc.type = 'sine'; // 正弦波模擬飽滿重低音
+    punchOsc.type = 'sine'; 
     punchOsc.frequency.setValueAtTime(160, time);
-    punchOsc.frequency.exponentialRampToValueAtTime(40, time + 0.15); // 音高快速下滑模擬撞擊
+    punchOsc.frequency.exponentialRampToValueAtTime(40, time + 0.15); 
     
     punchGain.gain.setValueAtTime(0.4, time);
     punchGain.gain.exponentialRampToValueAtTime(0.01, time + 0.18);
@@ -317,19 +307,19 @@ function playHitSound() {
     punchOsc.start(time);
     punchOsc.stop(time + 0.18);
 
-    // 2. 產生氣球爆開的高頻破裂雜訊（Noise Burst）
-    let bufferSize = audioCtx.sampleRate * 0.1; // 0.1 秒的音訊長度
+    // 2. 氣球破裂高頻雜訊
+    let bufferSize = audioCtx.sampleRate * 0.1; 
     let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
     let data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1; // 填滿白噪音
+        data[i] = Math.random() * 2 - 1; 
     }
     
     let noiseNode = audioCtx.createBufferSource();
     noiseNode.buffer = buffer;
     
     let noiseFilter = audioCtx.createBiquadFilter();
-    noiseFilter.type = 'highpass'; // 高通濾波器，濾掉低頻，留下氣球塑膠爆裂脆聲
+    noiseFilter.type = 'highpass'; 
     noiseFilter.frequency.setValueAtTime(1000, time);
     
     let noiseGain = audioCtx.createGain();
@@ -399,10 +389,7 @@ async function initOrRestart() {
 
 function startGameLogic() {
     const statusDiv = document.getElementById("status");
-    statusDiv.innerText = "🥊 氣球打擊王 - 比賽開始！";
-    
-    // 進入比賽，切斷選單音樂
-    stopMenuBGM();
+    statusDiv.innerText = "🥊 氣球打擊王 - 戰鬥進行中！";
 
     score = 0;
     timeLeft = 60;
@@ -445,8 +432,7 @@ function endGame() {
     document.getElementById("final-score").innerText = score + " / 500";
     document.getElementById("game-over-screen").style.display = "flex";
     
-    // 挑戰結束回到大廳，重新恢復備戰音樂
-    startMenuBGM();
+    // 💡 結算畫面時音樂維持播放，不中斷戰鬥熱血氛圍
 }
 
 function resetGame() {
@@ -577,7 +563,7 @@ function drawGame() {
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = lastStatus === "right" ? "rgba(244, 63, 94, 0.85)" : "rgba(244, 63, 94, 0.15)";
+    ctx.fillStyle = lastStatus === "右揮拳" ? "rgba(244, 63, 94, 0.85)" : "rgba(244, 63, 94, 0.15)";
     ctx.strokeStyle = "#f43f5e";
     ctx.lineWidth = 4;
     ctx.beginPath();
@@ -638,8 +624,7 @@ function checkHit(punchType) {
                 note.active = false; 
                 document.getElementById("score-display").innerText = score + " / 500";
                 
-                // 🔊 觸發完美的爆破打擊音效
-                playHitSound();
+                playHitSound(); // 🔊 震撼打擊音效同時疊加播放
                 
                 createExplosion(note.x, note.y, punchType === "左揮拳" ? "left" : "right");
                 break;
