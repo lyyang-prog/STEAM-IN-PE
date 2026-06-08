@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 氣球打擊王 - 三代難度挑戰版</title>
+    <title>AI 氣球打擊王 - 節奏錯開完美版</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
     
@@ -47,7 +47,6 @@
             font-weight: 900;
         }
 
-        /* 難度選擇按鈕容器 */
         .btn-group {
             display: flex;
             gap: 12px;
@@ -66,7 +65,6 @@
             letter-spacing: 1px;
         }
 
-        /* 三種難度按鈕主題 */
         .btn-easy { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
         .btn-normal { background: linear-gradient(135deg, #ffde59 0%, #ff914d 100%); box-shadow: 0 0 15px rgba(255, 145, 77, 0.4); }
         .btn-hard { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); color: #fff; box-shadow: 0 0 15px rgba(225, 29, 72, 0.4); }
@@ -231,11 +229,10 @@ let timeLeft = 60;
 let timerInterval = null;
 let speedMultiplier = 1.0; 
 
-// 🎯 難度參數控制
 let currentDifficulty = "normal"; 
 let totalBalloons = 50; 
 let targetMaxScore = 500; 
-let difficultySpeedBase = 1.0; // 速度權重（簡單慢、困難快）
+let difficultySpeedBase = 1.0; 
 
 let spawnedBalloonsCount = 0;
 let balloonSpawnTimeline = []; 
@@ -243,45 +240,39 @@ let balloonSpawnTimeline = [];
 let lastSide = ""; 
 let sideStreak = 0; 
 
-// 🔊 音效與 3 種音樂控制
+// 🔊 音效與音樂控制
 let audioCtx = null;
 let bgmInterval = null;
 let selectedTrack = 0; 
 
-// 玩家點選難度按鈕觸發
 function selectDifficulty(diff) {
     currentDifficulty = diff;
-    
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
     
-    // 設定難度配置
     if (diff === 'easy') {
         totalBalloons = 40;
         targetMaxScore = 400;
-        difficultySpeedBase = 0.75; // 簡單：速度打 75 折
+        difficultySpeedBase = 0.75; 
     } else if (diff === 'normal') {
         totalBalloons = 50;
         targetMaxScore = 500;
-        difficultySpeedBase = 1.0;  // 普通：正常速
+        difficultySpeedBase = 1.0;  
     } else if (diff === 'hard') {
         totalBalloons = 60;
         targetMaxScore = 600;
-        difficultySpeedBase = 1.35; // 困難：基礎速度直接乘 1.35 倍！
+        difficultySpeedBase = 1.35; 
     }
 
     document.getElementById("menu-buttons").style.display = "none";
-    
     selectedTrack = Math.floor(Math.random() * 3);
     startFullMatchBGM();
     initOrRestart();
 }
 
-// 🎵 演算法隨機音樂合成器
 function startFullMatchBGM() {
     if (bgmInterval) clearInterval(bgmInterval);
-    
     let step = 0;
     const trackNames = ["『疾走電子流』", "『重低音轟炸』", "『熱血交響龐克』"];
     const diffNames = { easy: "【簡單】", normal: "【普通】", hard: "【困難】" };
@@ -291,7 +282,6 @@ function startFullMatchBGM() {
         if (audioCtx && audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
-
         let time = audioCtx.currentTime;
         let osc = audioCtx.createOscillator();
         let gain = audioCtx.createGain();
@@ -308,7 +298,7 @@ function startFullMatchBGM() {
             const notes = [98, 98, 98, 116, 87, 87, 116, 146]; 
             osc.type = 'square'; 
             osc.frequency.setValueAtTime(notes[step % notes.length] / 2, time);
-            gain.gain.setValueAtTime(0.1, time);
+            gain.gain.setValueAtTime(0.1; time);
             gain.gain.exponentialRampToValueAtTime(0.01, time + 0.25);
             if (step % 2 === 1) playSnareDrum(120, 0.1, time);
         } 
@@ -345,7 +335,6 @@ function playSnareDrum(pitch, volume, time) {
     snareOsc.stop(time + 0.12);
 }
 
-// 💥 演算法音效合成器：氣球爆破 + 重拳打擊感
 function playHitSound() {
     if (!audioCtx) return;
     let time = audioCtx.currentTime;
@@ -383,14 +372,27 @@ function playHitSound() {
     noiseNode.stop(time + 0.08);
 }
 
-// 🎯 動態依據氣球顆數分配時間軸
+// 🎯 優化核心：強制間隔演算法，杜絕兩邊同時掉落
 function generateRandomTimeline() {
     balloonSpawnTimeline = [];
     spawnedBalloonsCount = 0;
+    
+    let currentTrackTime = 1.5; // 第一顆氣球在 1.5 秒後出現
+    const minInterval = 0.65;   // 💡 核心制約：兩顆氣球生成時間至少要相隔 0.65 秒！
+    
     for (let i = 0; i < totalBalloons; i++) {
-        let randomSecond = 1.5 + Math.random() * 52.5;
-        balloonSpawnTimeline.push(randomSecond);
+        // 隨機增加 0.65秒 ~ 2.2秒 的空檔
+        let gap = minInterval + Math.random() * 1.55; 
+        currentTrackTime += gap;
+        
+        // 如果隨機排程超出了 55 秒，就將其壓回安全挑戰時間內
+        if (currentTrackTime > 55) {
+            currentTrackTime = 1.5 + Math.random() * 50;
+        }
+        balloonSpawnTimeline.push(currentTrackTime);
     }
+    
+    // 重新排序確保時間排序正常
     balloonSpawnTimeline.sort((a, b) => a - b);
 }
 
@@ -455,7 +457,6 @@ function startGameLogic() {
         timeLeft--;
         document.getElementById("time-display").innerText = timeLeft + "s";
         
-        // 時間倒數加速機制
         speedMultiplier = 1.0 + (60 - timeLeft) * 0.035; 
         
         if (timeLeft <= 10) {
@@ -478,7 +479,6 @@ function endGame() {
     document.getElementById("game-over-screen").style.display = "flex";
 }
 
-// 結算後回到主選單重選難度
 function backToMenu() {
     document.getElementById("game-over-screen").style.display = "none";
     document.getElementById("menu-buttons").style.display = "flex";
@@ -504,12 +504,13 @@ function updateAndSpawnLogic() {
         let nextSpawnTime = balloonSpawnTimeline[spawnedBalloonsCount];
         
         if (currentElapsedSecond >= nextSpawnTime) {
-            let currentSide = Math.random() > 0.5 ? "左" : "右";
+            let currentSide = Math.random() > 0.5 ? "左" : "right";
             
+            // 同側連續不超過3顆限制
             if (currentSide === lastSide) {
                 sideStreak++;
                 if (sideStreak > 3) {
-                    currentSide = (lastSide === "左") ? "右" : "左";
+                    currentSide = (lastSide === "左") ? "right" : "左";
                     sideStreak = 1; 
                 }
             } else {
@@ -524,7 +525,6 @@ function updateAndSpawnLogic() {
                 x: isLeft ? canvas.width * 0.25 : canvas.width * 0.75,
                 y: -30,
                 type: isLeft ? "左揮拳" : "right", 
-                // 🎯 融入難度基礎速度：簡單 *0.75，普通 *1.0，困難 *1.35
                 speed: baseSpeed * speedMultiplier * difficultySpeedBase, 
                 active: true
             });
