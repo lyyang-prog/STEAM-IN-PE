@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Power Coach</title>
+    <title>AI 節奏打擊王 - 拳擊擂台 500分滿分版</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
     
     <style>
-        /* 直接寫在這裡，這就是「運動風格」的靈魂 */
         body {
-            background-color: #0f172a; /* 極致深藍黑 */
+            background-color: #0f172a; 
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0;
@@ -18,105 +17,512 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            overflow: hidden;
+            touch-action: none;
         }
 
         main {
-            width: 90%;
-            max-width: 400px;
+            width: 95%;
+            max-width: 1200px;
             text-align: center;
             background: #1e293b;
-            padding: 25px;
+            padding: 20px;
             border-radius: 30px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         h1 {
-            font-size: 1.5rem;
-            color: #22d3ee; /* 螢光電藍 */
+            font-size: 1.6rem;
+            color: #22d3ee; 
             text-transform: uppercase;
             letter-spacing: 2px;
-            margin-bottom: 20px;
+            margin: 0 0 10px 0;
         }
 
         button {
-            width: 100%;
-            padding: 20px;
+            width: 300px;
+            padding: 18px;
             background: linear-gradient(135deg, #22d3ee 0%, #0ea5e9 100%);
             color: #0f172a;
             border: none;
             border-radius: 15px;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-weight: 800;
             cursor: pointer;
             box-shadow: 0 10px 15px -3px rgba(34, 211, 238, 0.3);
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            transition: transform 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.98);
         }
 
         #status {
-            font-size: 0.8rem;
-            color: #94a3b8;
-            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #38bdf8;
+            margin-bottom: 10px;
             text-transform: uppercase;
+            font-weight: bold;
+            height: 20px;
         }
 
         .canvas-container {
-            width: 100%;
-            aspect-ratio: 1;
+            width: 85vw;
+            height: 65vh;
             background: #000;
             border-radius: 20px;
             overflow: hidden;
-            border: 2px solid #334155;
+            border: 4px solid #0ea5e9;
+            box-shadow: 0 0 30px rgba(14, 165, 233, 0.6);
             line-height: 0;
+            position: relative;
         }
 
         canvas {
             width: 100%;
             height: 100%;
+            object-fit: contain; 
         }
 
         .score-card {
-            margin-top: 20px;
+            margin-top: 15px;
             background: #0f172a;
-            padding: 15px;
+            padding: 12px;
             border-radius: 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 85vw;
         }
 
-        #score-display {
-            font-size: 4rem;
-            margin: 0;
-            color: #4ade80; /* 螢光綠 */
-            font-weight: 800;
+        .score-box {
+            text-align: center;
+            flex: 1;
         }
 
         .label {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #64748b;
+            letter-spacing: 1px;
+            margin-bottom: 3px;
+        }
+
+        #score-display {
+            font-size: 2rem;
+            margin: 0;
+            color: #4ade80; 
+            font-weight: 900;
+        }
+
+        #time-display {
+            font-size: 2rem;
+            margin: 0;
+            color: #f59e0b; 
+            font-weight: 900;
         }
 
         #label-container {
-            margin-top: 5px;
+            font-size: 1rem;
             color: #22d3ee;
             font-weight: bold;
+            margin-top: 5px;
+        }
+
+        #game-over-screen {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 30px;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        #game-over-screen h2 {
+            color: #ef4444;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        #final-score {
+            font-size: 3.5rem;
+            color: #4ade80;
+            font-weight: 900;
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
     <main>
-        <h1>AI Trainer</h1>
-        <button type="button" onclick="init()">START WORKOUT</button>
-        <div id="status">Ready to Scan</div>
+        <h1>AI Rhythm Boxer - Arena</h1>
+        <button type="button" id="start-btn" onclick="initOrRestart()">START CHALLENGE</button>
+        <div id="status">Ready to Fight</div>
         
         <div class="canvas-container">
             <canvas id="canvas"></canvas>
         </div>
 
         <div class="score-card">
-            <div class="label">TOTAL REPS</div>
-            <h2 id="score-display">0</h2>
-            <div id="label-container">Position Checking...</div>
+            <div class="score-box">
+                <div class="label">SCORE</div>
+                <h2 id="score-display">0 / 500</h2>
+            </div>
+            <div class="score-box" style="border-left: 1px solid #334155; border-right: 1px solid #334155;">
+                <div class="label">TIME LEFT</div>
+                <h2 id="time-display">60s</h2>
+            </div>
+            <div class="score-box">
+                <div class="label">AI POSE</div>
+                <div id="label-container">Waiting...</div>
+            </div>
+        </div>
+
+        <div id="game-over-screen">
+            <h2>CHALLENGE COMPLETE</h2>
+            <div class="label">YOUR FINAL SCORE</div>
+            <div id="final-score">0</div>
+            <button type="button" onclick="resetGame()">CHALLENGE AGAIN</button>
         </div>
     </main>
 
-    <script src="./script.js"></script>
+<script>
+const URL = "https://teachablemachine.withgoogle.com/models/Bcp6i6fs_/";
+
+let model, webcam, ctx, canvas, maxPredictions;
+
+let score = 0;
+let lastStatus = "準備"; 
+let isPunchCooldown = false;
+let isGameRunning = false;
+let isCameraInitialized = false; 
+
+let notes = [];       
+let particles = [];   
+let targetY;          
+
+let timeLeft = 60;
+let timerInterval = null;
+let speedMultiplier = 1.0; 
+
+// 🎯 更新：一局固定 50 顆氣球，總分 500 分
+const TOTAL_BALLOONS = 50;
+let spawnedBalloonsCount = 0;
+let balloonSpawnTimeline = []; 
+
+function generateRandomTimeline() {
+    balloonSpawnTimeline = [];
+    spawnedBalloonsCount = 0;
+    
+    // 把前 54 秒打碎成 50 個隨機時間點，留最後 6 秒給最後幾顆的掉落與判定時間
+    for (let i = 0; i < TOTAL_BALLOONS; i++) {
+        let randomSecond = 1.5 + Math.random() * 52.5;
+        balloonSpawnTimeline.push(randomSecond);
+    }
+    balloonSpawnTimeline.sort((a, b) => a - b);
+}
+
+async function initOrRestart() {
+    const startBtn = document.getElementById("start-btn");
+    const statusDiv = document.getElementById("status");
+    
+    startBtn.style.display = "none"; 
+
+    if (isCameraInitialized) {
+        startGameLogic();
+        return;
+    }
+
+    statusDiv.innerText = "正在啟動 iPad 攝像頭...";
+    const modelURL = URL + "model.json";
+    const metadataURL = URL + "metadata.json";
+
+    try {
+        canvas = document.getElementById("canvas");
+        canvas.width = 800;
+        canvas.height = 600;
+        ctx = canvas.getContext("2d");
+        targetY = canvas.height * 0.8; 
+        
+        const size = 400;
+        const flip = true; 
+        webcam = new tmPose.Webcam(size, size, flip); 
+        
+        await webcam.setup({ facingMode: "user" }); 
+        await webcam.play();
+        
+        statusDiv.innerText = "相機已就緒，正在加載 AI 模型...";
+
+        model = await tmPose.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+
+        isCameraInitialized = true;
+        startGameLogic();
+    } catch (e) {
+        console.error(e);
+        statusDiv.innerText = "錯誤: 無法開啟相機或載入模型。";
+        startBtn.style.display = "block";
+    }
+}
+
+function startGameLogic() {
+    const statusDiv = document.getElementById("status");
+    statusDiv.innerText = "🔥 50 顆氣球擂台賽！預備出拳！";
+    
+    score = 0;
+    timeLeft = 60;
+    speedMultiplier = 1.0;
+    notes = [];
+    particles = [];
+    
+    generateRandomTimeline(); 
+    
+    document.getElementById("score-display").innerText = "0 / 500";
+    document.getElementById("time-display").innerText = timeLeft + "s";
+    document.getElementById("time-display").style.color = "#f59e0b"; 
+    document.getElementById("game-over-screen").style.display = "none";
+
+    isGameRunning = true;
+    
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("time-display").innerText = timeLeft + "s";
+        
+        // 速度加乘稍微拉高（0.028 -> 0.033），讓後期挑戰性更強
+        speedMultiplier = 1.0 + (60 - timeLeft) * 0.033; 
+        
+        if (timeLeft <= 10) {
+            document.getElementById("time-display").style.color = "#ef4444";
+        }
+
+        if (timeLeft <= 0) {
+            endGame();
+        }
+    }, 1000);
+
+    window.requestAnimationFrame(gameLoop);
+}
+
+function endGame() {
+    isGameRunning = false;
+    clearInterval(timerInterval);
+    document.getElementById("status").innerText = "⏰ 挑戰結束！";
+    document.getElementById("final-score").innerText = score + " / 500";
+    document.getElementById("game-over-screen").style.display = "flex";
+}
+
+function resetGame() {
+    document.getElementById("game-over-screen").style.display = "none";
+    startGameLogic();
+}
+
+async function gameLoop(timestamp) {
+    if (!isGameRunning) return;
+
+    webcam.update(); 
+    await predict(); 
+    updateAndSpawnLogic(); 
+    drawGame();      
+    
+    window.requestAnimationFrame(gameLoop);
+}
+
+function updateAndSpawnLogic() {
+    let currentElapsedSecond = 60 - timeLeft; 
+    
+    if (spawnedBalloonsCount < TOTAL_BALLOONS) {
+        let nextSpawnTime = balloonSpawnTimeline[spawnedBalloonsCount];
+        
+        if (currentElapsedSecond >= nextSpawnTime) {
+            let isLeft = Math.random() > 0.5; 
+            let baseSpeed = 4 + Math.random() * 2; 
+            
+            notes.push({
+                x: isLeft ? canvas.width * 0.25 : canvas.width * 0.75,
+                y: -30,
+                type: isLeft ? "左揮拳" : "右揮拳",
+                speed: baseSpeed * speedMultiplier, 
+                active: true
+            });
+            spawnedBalloonsCount++; 
+        }
+    }
+}
+
+async function predict() {
+    if (!isGameRunning) return;
+    
+    const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+    const prediction = await model.predict(posenetOutput);
+
+    let highestPred = "準備";
+    let highestVal = 0;
+    for (let i = 0; i < maxPredictions; i++) {
+        if (prediction[i].probability > highestVal) {
+            highestVal = prediction[i].probability;
+            highestPred = prediction[i].className;
+        }
+    }
+
+    const labelContainer = document.getElementById("label-container");
+    let emoji = highestPred === "準備" ? "🧘 準備" : (highestPred === "左揮拳" ? "🥊 左" : "🥊 右");
+    labelContainer.innerText = `${emoji} (${(highestVal * 100).toFixed(0)}%)`;
+
+    if (highestVal > 0.80) {
+        let oldStatus = lastStatus;
+        lastStatus = highestPred;
+
+        if (oldStatus === "準備" && lastStatus !== "準備" && !isPunchCooldown) {
+            checkHit(lastStatus); 
+            isPunchCooldown = true;
+            setTimeout(() => { isPunchCooldown = false; }, 350); 
+        }
+    }
+}
+
+function drawRingBackground() {
+    ctx.fillStyle = "#090d16";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    let floorGrad = ctx.createLinearGradient(0, canvas.height*0.5, 0, canvas.height);
+    floorGrad.addColorStop(0, "#1e1b4b"); 
+    floorGrad.addColorStop(1, "#311042"); 
+    ctx.fillStyle = floorGrad;
+    
+    ctx.beginPath();
+    ctx.moveTo(canvas.width * 0.2, canvas.height * 0.5);
+    ctx.lineTo(canvas.width * 0.8, canvas.height * 0.5);
+    ctx.lineTo(canvas.width, canvas.height);
+    ctx.lineTo(0, canvas.height);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(239, 68, 68, 0.4)"; 
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(0, canvas.height*0.4); ctx.lineTo(canvas.width*0.2, canvas.height*0.5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, canvas.height*0.6); ctx.lineTo(canvas.width*0.1, canvas.height*0.75); ctx.stroke();
+
+    ctx.strokeStyle = "rgba(14, 165, 233, 0.4)"; 
+    ctx.beginPath(); ctx.moveTo(canvas.width, canvas.height*0.4); ctx.lineTo(canvas.width*0.8, canvas.height*0.5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(canvas.width, canvas.height*0.6); ctx.lineTo(canvas.width*0.9, canvas.height*0.75); ctx.stroke();
+
+    let lightGrad = ctx.createRadialGradient(canvas.width/2, canvas.height*0.2, 10, canvas.width/2, canvas.height*0.2, 300);
+    lightGrad.addColorStop(0, "rgba(34, 211, 238, 0.15)");
+    lightGrad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = lightGrad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawGame() {
+    drawRingBackground();
+
+    ctx.save();
+    ctx.globalAlpha = 0.25; 
+    ctx.drawImage(webcam.canvas, 0, 0, canvas.width, canvas.height);
+    ctx.restore();
+
+    ctx.strokeStyle = "rgba(253, 224, 71, 0.6)"; 
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(0, targetY);
+    ctx.lineTo(canvas.width, targetY);
+    ctx.stroke();
+
+    ctx.fillStyle = lastStatus === "左揮拳" ? "rgba(34, 211, 238, 0.8)" : "rgba(34, 211, 238, 0.2)";
+    ctx.strokeStyle = "#22d3ee";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(canvas.width * 0.25, targetY, 45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = lastStatus === "右揮拳" ? "rgba(244, 63, 94, 0.8)" : "rgba(244, 63, 94, 0.2)";
+    ctx.strokeStyle = "#f43f5e";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(canvas.width * 0.75, targetY, 45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    for (let i = notes.length - 1; i >= 0; i--) {
+        let note = notes[i];
+        note.y += note.speed; 
+
+        if (note.active) {
+            ctx.fillStyle = note.type === "左揮拳" ? "#22d3ee" : "#f43f5e";
+            ctx.shadowBlur = 15; 
+            ctx.shadowColor = note.type === "左揮拳" ? "#22d3ee" : "#f43f5e";
+            
+            ctx.beginPath();
+            ctx.ellipse(note.x, note.y, 30, 36, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0; 
+            
+            ctx.strokeStyle = "rgba(255,255,255,0.6)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(note.x, note.y + 36);
+            ctx.lineTo(note.x, note.y + 50);
+            ctx.stroke();
+        }
+
+        if (note.y > canvas.height + 50) {
+            notes.splice(i, 1);
+        }
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += p.vx; p.y += p.vy; p.alpha -= 0.04; 
+
+        if (p.alpha <= 0) {
+            particles.splice(i, 1);
+            continue;
+        }
+
+        ctx.fillStyle = p.color === "left" ? `rgba(34, 211, 238, ${p.alpha})` : `rgba(244, 63, 94, ${p.alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function checkHit(punchType) {
+    for (let note of notes) {
+        if (note.active && note.type === punchType) {
+            let distance = Math.abs(note.y - targetY);
+            
+            if (distance < 60) {
+                score += 10;
+                note.active = false; 
+                document.getElementById("score-display").innerText = score + " / 500";
+                
+                createExplosion(note.x, note.y, punchType === "左揮拳" ? "left" : "right");
+                break;
+            }
+        }
+    }
+}
+
+function createExplosion(x, y, side) {
+    for (let i = 0; i < 18; i++) {
+        particles.push({
+            x: x, y: y,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 8,
+            size: 3 + Math.random() * 5,
+            color: side,
+            alpha: 1.0
+        });
+    }
+}
+</script>
 </body>
 </html>
